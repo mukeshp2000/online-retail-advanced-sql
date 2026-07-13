@@ -123,25 +123,30 @@ ORDER BY Total_Revenue DESC;
 
 
 -- 9. Running Total of Monthly Revenue using SUM() OVER()
-
 WITH monthly_revenue AS (
     SELECT
-        DATE_FORMAT(STR_TO_DATE(InvoiceDate, '%d/%m/%Y %H:%i'),'%Y-%m')AS Sales_Month,
+        DATE_FORMAT(InvoiceDate, '%Y-%m') AS Sales_Month,
         ROUND(SUM(Quantity * UnitPrice), 2) AS Monthly_Revenue
     FROM online_retail_full
-    WHERE STR_TO_DATE(InvoiceDate,'%d/%m/%Y %H:%i') IS NOT NULL
-    GROUP BY Sales_Month
+    WHERE Quantity > 0
+      AND UnitPrice > 0
+    GROUP BY DATE_FORMAT(InvoiceDate, '%Y-%m')
 )
 
-SELECT Sales_Month,
+SELECT
+    Sales_Month,
     Monthly_Revenue,
-    ROUND(SUM(Monthly_Revenue) OVER (ORDER BY Sales_Month),2) AS Running_Total_Revenue
+    ROUND(
+        SUM(Monthly_Revenue) OVER (
+            ORDER BY Sales_Month
+        ),
+        2
+    ) AS Running_Total_Revenue
 FROM monthly_revenue
 ORDER BY Sales_Month;
 
 
 -- 10. Customer Contribution to Total Revenue
-
 WITH customer_revenue AS (
     SELECT CustomerID,
         ROUND(SUM(Quantity * UnitPrice), 2) AS Total_Revenue
